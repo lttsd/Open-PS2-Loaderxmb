@@ -1,3 +1,4 @@
+```yaml
 name: CI-compile
 
 on:
@@ -80,7 +81,7 @@ jobs:
 
   merge-variants:
     runs-on: ubuntu-latest
-    needs: build-variants
+    needs: [build-variants]
     steps:
       - name: Merge Artifacts
         uses: actions/upload-artifact/merge@v4
@@ -100,141 +101,4 @@ jobs:
         git config --global --add safe.directory "$GITHUB_WORKSPACE"
         git fetch --prune --unshallow
 
-    - name: Compile -> make download_lng languages
-      run: make --trace download_lng languages
-
-    - name: Create artifact
-      run: sh ./lng_pack.sh
-
-    - name: Upload release artifact
-      if: ${{ success() }}
-      uses: actions/upload-artifact@v4
-      with:
-        name: OPNPS2LD-LANGS
-        path: |
-          OPNPS2LD-LANGS-*.zip
-
-  build-debug:
-    strategy:
-      fail-fast: false
-      matrix:
-        debug: [iopcore_debug, ingame_debug, eesio_debug, iopcore_ppctty_debug, ingame_ppctty_debug, DTL_T10000=1]
-        # container_commit: [":main", "@sha256:1f00689809455d43b520e4cd4eea00c6be56d71819ae38efc6b55b56464cbd1e"] Replace with desired docker image hash or tag
-        container_commit: [":main"]
-    runs-on: ubuntu-latest
-    container: ghcr.io/ps2homebrew/ps2homebrew${{ matrix.container_commit }}
-    steps:
-    - name: git checkout
-      uses: actions/checkout@v4
-
-    - run: |
-        git config --global --add safe.directory "$GITHUB_WORKSPACE"
-        git fetch --prune --unshallow
-
-    - name: Get version
-      run: |
-        echo "OPL_VERSION=$(make oplversion)" >> $GITHUB_ENV
-        SHORT_COMMIT="${{ matrix.container_commit }}"
-        # Extract the last 4 characters
-        SHORT_COMMIT=${SHORT_COMMIT: -4}
-        echo "SHORT_COMMIT=$SHORT_COMMIT" >> $GITHUB_ENV
-
-    - name: Compile -> make debug
-      run: |
-        make ${{ matrix.debug }} --trace
-        mv opl.elf opl-${{ matrix.debug }}-${{ env.OPL_VERSION }}-${{ env.SHORT_COMMIT }}.elf
-
-    - name: Upload variants artifact ELF
-      uses: actions/upload-artifact@v4
-      with:
-        name: opl-${{ matrix.debug }}-${{ env.OPL_VERSION }}-${{ env.SHORT_COMMIT }}
-        path: opl-*.elf
-
-  merge-debug:
-    runs-on: ubuntu-latest
-    needs: build-debug
-    steps:
-      - name: Merge Artifacts
-        uses: actions/upload-artifact/merge@v4
-        with:
-          name: OPNPS2LD-DEBUG
-          pattern: opl-*
-          delete-merged: true
-
-  release:
-    needs: [build, build-variants, build-lang]
-    runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/master'
-    env:
-      USERNAME: ${{ secrets.USERNAME }}
-      PASSWORD: ${{ secrets.PASSWORD }}
-    steps:
-    - name: git checkout
-      uses: actions/checkout@v4
-
-    - run: git fetch --prune --unshallow
-
-    - name: Get version
-      run: |
-        echo "OPL_VERSION=$(make oplversion)" >> $GITHUB_ENV
-
-    - name: Download all artifacts
-      uses: actions/download-artifact@v4
-
-    - name: Prepare artifacts for release
-      run: |
-        echo packing release of OPL ${{ env.OPL_VERSION }}
-        cp INFO/* OPNPS2LD/
-        cp INFO/* OPNPS2LD-VARIANTS/
-        7z a -t7z OPNPS2LD-${{ env.OPL_VERSION }}.7z OPNPS2LD/*
-        7z a -t7z OPNPS2LD-VARIANTS-${{ env.OPL_VERSION }}.7z OPNPS2LD-VARIANTS/*
-        7z a -t7z OPNPS2LD-LANGS-${{ env.OPL_VERSION }}.7z OPNPS2LD-LANGS/*
-        cp -f OPNPS2LD-${{ env.OPL_VERSION }}.7z OPNPS2LD.7z
-        cp -f OPNPS2LD-VARIANTS-${{ env.OPL_VERSION }}.7z OPNPS2LD-VARIANTS.7z
-        cp -f OPNPS2LD-LANGS-${{ env.OPL_VERSION }}.7z OPNPS2LD-LANGS.7z
-        cp -f OPNPS2LD/OPNPS2LD-${{ env.OPL_VERSION }}.ELF OPNPS2LD.ELF
-
-    - name: Create prerelease
-      if: github.ref == 'refs/heads/master'
-      uses: mathieucarbou/marvinpinto-action-automatic-releases@latest
-      with:
-        repo_token: "${{ secrets.GITHUB_TOKEN }}"
-        prerelease: true
-        automatic_release_tag: "latest"
-        title: "${{ steps.version.outputs.version }}"
-        files: |
-          OPNPS2LD-${{ env.OPL_VERSION }}.7z
-          OPNPS2LD-VARIANTS-${{ env.OPL_VERSION }}.7z
-          OPNPS2LD-LANGS-${{ env.OPL_VERSION }}.7z
-          OPNPS2LD.7z
-          OPNPS2LD-VARIANTS.7z
-          OPNPS2LD-LANGS.7z
-          OPNPS2LD.ELF
-
-    - name: Create release
-      if: startsWith(github.ref, 'refs/tags/v')
-      uses: mathieucarbou/marvinpinto-action-automatic-releases@latest
-      with:
-        repo_token: "${{ secrets.GITHUB_TOKEN }}"
-        prerelease: "${{ contains(github.ref, '-rc') }}"
-        title: "${{ env.OPL_VERSION }}"
-        files: |
-          OPNPS2LD-${{ env.OPL_VERSION }}.7z
-          OPNPS2LD-VARIANTS-${{ env.OPL_VERSION }}.7z
-          OPNPS2LD-LANGS-${{ env.OPL_VERSION }}.7z
-          OPNPS2LD.7z
-          OPNPS2LD-VARIANTS.7z
-          OPNPS2LD-LANGS.7z
-          OPNPS2LD.ELF
-
-    - name: Upload pre-release to Mega
-      if: github.ref == 'refs/heads/master' && env.USERNAME != null
-      uses: Difegue/action-megacmd@master
-      with:
-        args: put -c OPNPS2LD.7z /OPL/Pre-Release/${{ env.OPL_VERSION }}/run_${{ github.run_number }}/
-
-    - name: Upload release to Mega
-      if: startsWith(github.ref, 'refs/tags/v') && env.USERNAME != null
-      uses: Difegue/action-megacmd@master
-      with:
-        args: put -c OPNPS2LD.7z /OPL/Release/${{ env.OPL_VERSION }}/
+   
