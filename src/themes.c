@@ -9,6 +9,7 @@
 #include "include/lang.h"
 #include "include/pad.h"
 #include "include/sound.h"
+#include "include/xmb.h"
 
 #define MENU_POS_V     50
 #define HINT_HEIGHT    32
@@ -48,6 +49,9 @@ enum ELEM_ATTRIBUTE_TYPE {
     ELEM_TYPE_LOADING_ICON,
     ELEM_TYPE_BDM_INDEX,
     ELEM_TYPE_GAME_COUNT_TEXT,
+    ELEM_TYPE_XMB_BACKGROUND,
+    ELEM_TYPE_XMB_BAR,
+    ELEM_TYPE_XMB_LIST,
     ELEM_TYPE_COUNT
 };
 
@@ -76,7 +80,10 @@ static const char *elementsType[ELEM_TYPE_COUNT] = {
     "InfoHintText",
     "LoadingIcon",
     "BdmIndex",
-    "GameCountText"};
+    "GameCountText",
+    "XmbBackground",
+    "XmbBar",
+    "XmbList"};
 
 // Common functions for Text ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -875,6 +882,21 @@ static void drawItemsList(struct menu_list *menu, struct submenu_list *item, con
     }
 }
 
+static void drawXmbBackground(struct menu_list *menu, struct submenu_list *item, config_set_t *config, struct theme_element *elem)
+{
+    xmbDrawBackground(elem);
+}
+
+static void drawXmbBar(struct menu_list *menu, struct submenu_list *item, config_set_t *config, struct theme_element *elem)
+{
+    xmbDrawBar(menu, elem);
+}
+
+static void drawXmbList(struct menu_list *menu, struct submenu_list *item, config_set_t *config, struct theme_element *elem)
+{
+    xmbDrawList(menu, item, elem);
+}
+
 static void initItemsList(const char *themePath, config_set_t *themeConfig, theme_t *theme, theme_element_t *elem, const char *name, const char *decorator)
 {
     char elemProp[64];
@@ -1049,14 +1071,27 @@ static int addGUIElem(const char *themePath, config_set_t *themeConfig, theme_t 
             } else if (!strcmp(elementsType[ELEM_TYPE_MENU_TEXT], type)) {
                 elem = initBasic(themePath, themeConfig, theme, name, ELEM_TYPE_MENU_TEXT, screenWidth >> 1, 20, ALIGN_CENTER, 200, 20, SCALING_RATIO, theme->textColor, theme->fonts[0]);
                 elem->drawElem = &drawMenuText;
-            } else if (!strcmp(elementsType[ELEM_TYPE_ITEMS_LIST], type)) {
+            } else if (!strcmp(elementsType[ELEM_TYPE_XMB_BACKGROUND], type)) {
+                if (!elems->first) {
+                    elem = initBasic(themePath, themeConfig, theme, name, ELEM_TYPE_BACKGROUND, 0, 0, ALIGN_NONE, screenWidth, screenHeight, SCALING_NONE, GS_SETREG_RGBA(12, 36, 104, 0x80), theme->fonts[0]);
+                    elem->drawElem = &drawXmbBackground;
+                }
+            } else if (!strcmp(elementsType[ELEM_TYPE_XMB_BAR], type)) {
+                elem = initBasic(themePath, themeConfig, theme, name, ELEM_TYPE_MENU_ICON, 150, 96, ALIGN_CENTER, 100, 48, SCALING_RATIO, theme->textColor, theme->fonts[0]);
+                elem->drawElem = &drawXmbBar;
+            } else if (!strcmp(elementsType[ELEM_TYPE_ITEMS_LIST], type) || !strcmp(elementsType[ELEM_TYPE_XMB_LIST], type)) {
+                int xmbList = !strcmp(elementsType[ELEM_TYPE_XMB_LIST], type);
                 if (!theme->gamesItemsList) {
                     elem = initBasic(themePath, themeConfig, theme, name, ELEM_TYPE_ITEMS_LIST, 0, 0, ALIGN_NONE, DIM_UNDEF, DIM_UNDEF, SCALING_RATIO, theme->textColor, theme->fonts[0]);
                     initItemsList(themePath, themeConfig, theme, elem, name, NULL);
+                    if (xmbList)
+                        elem->drawElem = &drawXmbList;
                     theme->gamesItemsList = elem;
                 } else if (!theme->appsItemsList) {
                     elem = initBasic(themePath, themeConfig, theme, name, ELEM_TYPE_ITEMS_LIST, 42, 42, ALIGN_NONE, 400, 360, SCALING_RATIO, theme->textColor, theme->fonts[0]);
                     initItemsList(themePath, themeConfig, theme, elem, name, NULL);
+                    if (xmbList)
+                        elem->drawElem = &drawXmbList;
                     theme->appsItemsList = elem;
                 }
             } else if (!strcmp(elementsType[ELEM_TYPE_ITEM_ICON], type)) {
