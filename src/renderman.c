@@ -346,6 +346,17 @@ void rmDrawPixmap(GSTEXTURE *txt, int x, int y, short aligned, int w, int h, sho
     rmDrawQuad(&quad);
 }
 
+void rmDrawPixmapUV(GSTEXTURE *txt, int x, int y, short aligned, int w, int h, short scaled, u64 color, int u1, int v1, int u2, int v2)
+{
+    rm_quad_t quad;
+    rmSetupQuad(txt, x, y, aligned, w, h, scaled, color, &quad);
+    quad.ul.u = u1;
+    quad.ul.v = v1;
+    quad.br.u = u2;
+    quad.br.v = v2;
+    rmDrawQuad(&quad);
+}
+
 void rmDrawOverlayPixmap(GSTEXTURE *overlay, int x, int y, short aligned, int w, int h, short scaled, u64 color,
                          GSTEXTURE *inlay, int ulx, int uly, int urx, int ury, int blx, int bly, int brx, int bry)
 {

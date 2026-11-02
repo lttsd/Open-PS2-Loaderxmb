@@ -968,7 +968,7 @@ static void drawInfoHintText(struct menu_list *menu, struct submenu_list *item, 
 
 static void validateBackgroundElems(const char *themePath, config_set_t *themeConfig, theme_t *theme, theme_elems_t *mainElems, theme_elems_t *infoElems)
 {
-    if (!mainElems->first || (mainElems->first->type != ELEM_TYPE_BACKGROUND)) {
+    if (!mainElems->first || (mainElems->first->type != ELEM_TYPE_BACKGROUND && mainElems->first->type != ELEM_TYPE_XMB_BACKGROUND)) {
         LOG("THEMES No valid background found for main, add default BG_ART\n");
         theme_element_t *backgroundElem = initBasic(themePath, themeConfig, theme, "bg", ELEM_TYPE_BACKGROUND, 0, 0, ALIGN_NONE, screenWidth, screenHeight, SCALING_NONE, gDefaultCol, theme->fonts[0]);
         initBackground(themePath, themeConfig, theme, backgroundElem, "bg", "BG", 1, NULL);
@@ -977,7 +977,7 @@ static void validateBackgroundElems(const char *themePath, config_set_t *themeCo
     }
 
     if (infoElems->first) {
-        if (infoElems->first->type != ELEM_TYPE_BACKGROUND) {
+        if (infoElems->first->type != ELEM_TYPE_BACKGROUND && infoElems->first->type != ELEM_TYPE_XMB_BACKGROUND) {
             LOG("THEMES No valid background found for info, add default BG_ART\n");
             theme_element_t *backgroundElem = initBasic(themePath, themeConfig, theme, "bg", ELEM_TYPE_BACKGROUND, 0, 0, ALIGN_NONE, screenWidth, screenHeight, SCALING_NONE, gDefaultCol, theme->fonts[0]);
             initBackground(themePath, themeConfig, theme, backgroundElem, "bg", "BG", 1, NULL);
@@ -1073,7 +1073,7 @@ static int addGUIElem(const char *themePath, config_set_t *themeConfig, theme_t 
                 elem->drawElem = &drawMenuText;
             } else if (!strcmp(elementsType[ELEM_TYPE_XMB_BACKGROUND], type)) {
                 if (!elems->first) {
-                    elem = initBasic(themePath, themeConfig, theme, name, ELEM_TYPE_BACKGROUND, 0, 0, ALIGN_NONE, screenWidth, screenHeight, SCALING_NONE, GS_SETREG_RGBA(12, 36, 104, 0x80), theme->fonts[0]);
+                    elem = initBasic(themePath, themeConfig, theme, name, ELEM_TYPE_XMB_BACKGROUND, 0, 0, ALIGN_NONE, screenWidth, screenHeight, SCALING_NONE, GS_SETREG_RGBA(12, 36, 104, 0x80), theme->fonts[0]);
                     elem->drawElem = &drawXmbBackground;
                 }
             } else if (!strcmp(elementsType[ELEM_TYPE_XMB_BAR], type)) {

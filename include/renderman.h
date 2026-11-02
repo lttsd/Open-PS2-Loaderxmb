@@ -93,6 +93,9 @@ void rmDrawQuad(rm_quad_t *q);
 /** Queues a specified pixmap (tinted with colour) to be rendered on specified position */
 void rmDrawPixmap(GSTEXTURE *txt, int x, int y, short aligned, int w, int h, short scaled, u64 color);
 
+/** Like rmDrawPixmap, but draws only the texture region (u1,v1)-(u2,v2) */
+void rmDrawPixmapUV(GSTEXTURE *txt, int x, int y, short aligned, int w, int h, short scaled, u64 color, int u1, int v1, int u2, int v2);
+
 void rmDrawOverlayPixmap(GSTEXTURE *overlay, int x, int y, short aligned, int w, int h, short scaled, u64 color,
                          GSTEXTURE *inlay, int ulx, int uly, int urx, int ury, int blx, int bly, int brx, int bry);
 

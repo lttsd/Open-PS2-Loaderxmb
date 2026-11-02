@@ -4,6 +4,7 @@
 #include "include/fntsys.h"
 #include "include/menusys.h"
 #include "include/themes.h"
+#include "include/textures.h"
 #include <math.h>
 
 #define XMB_PITCH 34
@@ -17,6 +18,12 @@ static struct submenu_list *lastItem;
 static int clampi(int v, int lo, int hi)
 {
     return v < lo ? lo : v > hi ? hi : v;
+}
+
+/* Cada ícono de categoría es una tira de 4 íconos cada 50 px; cada archivo resalta el suyo */
+static int iconCell(int id)
+{
+    return id == ETH_ICON ? 1 : id == HDD_ICON ? 2 : id == APP_ICON ? 3 : 0;
 }
 
 static u64 col(int r, int g, int b, int a)
@@ -98,8 +105,12 @@ void xmbDrawBar(struct menu_list *menu, theme_element_t *elem)
         a = 0x30 + (int)(0x50 * focus);
 
         tex = thmGetTexture(m->item->icon_id);
-        if (tex && tex->Mem)
-            rmDrawPixmap(tex, x, elem->posY, ALIGN_CENTER, size, size, SCALING_RATIO, GS_SETREG_RGBA(0x80, 0x80, 0x80, a));
+        if (tex && tex->Mem) {
+            int cell = iconCell(m->item->icon_id);
+
+            rmDrawPixmapUV(tex, x, elem->posY, ALIGN_CENTER, size, size, SCALING_RATIO,
+                           GS_SETREG_RGBA(0x80, 0x80, 0x80, a), 28 + cell * 50, 3, 76 + cell * 50, 50);
+        }
 
         if (focus > 0.4f)
             fntRenderString(elem->font, x, elem->posY + size / 2 + 18, ALIGN_CENTER, 0, 0, menuItemGetText(m->item),
