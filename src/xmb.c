@@ -7,6 +7,8 @@
 #include "include/textures.h"
 #include <math.h>
 
+extern GSGLOBAL *gsGlobal;
+
 #define XMB_PITCH 34
 #define XMB_ICON  48
 
@@ -43,6 +45,10 @@ void xmbDrawBackground(theme_element_t *elem)
 
     rmGetScreenExtents(&sw, &sh);
 
+    /* Otros elementos (portadas) cambian el estado de dibujo y no lo restauran */
+    gsKit_set_primalpha(gsGlobal, gDefaultAlpha, 0);
+    gsKit_set_test(gsGlobal, GS_ATEST_OFF);
+
     for (int y = 0; y < sh; y += 8) {
         float k = 0.2f + 0.8f * y / sh;
 
@@ -57,7 +63,8 @@ void xmbDrawBackground(theme_element_t *elem)
                       sinf(x * 0.027f - ph * 1.4f) * wave[l].amp * 0.35f;
 
             rmDrawRect(x, y, 6, sh - y, col(r + 90, g + 110, b + 130, wave[l].alpha));
-            rmDrawRect(x, y, 6, 2, col(r + 150, g + 170, b + 190, wave[l].alpha * 2));
+            rmDrawRect(x, y - 4, 6, 4, col(r + 150, g + 170, b + 190, wave[l].alpha));
+            rmDrawRect(x, y, 6, 4, col(r + 170, g + 190, b + 210, wave[l].alpha * 4));
         }
     }
 }
