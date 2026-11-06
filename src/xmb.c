@@ -62,9 +62,8 @@ void xmbDrawBackground(theme_element_t *elem)
             float y = wave[l].base * sh / 480 + sinf(x * 0.011f + ph) * wave[l].amp +
                       sinf(x * 0.027f - ph * 1.4f) * wave[l].amp * 0.35f;
 
-            rmDrawRect(x, y, 6, sh - y, col(r + 90, g + 110, b + 130, wave[l].alpha));
-            rmDrawRect(x, y - 4, 6, 4, col(r + 150, g + 170, b + 190, wave[l].alpha));
-            rmDrawRect(x, y, 6, 4, col(r + 170, g + 190, b + 210, wave[l].alpha * 4));
+            rmDrawRect(x, y, 6, sh - y, col(r + 14 + 8 * l, g + 40 + 14 * l, b + 60 + 18 * l, 0x80));
+            rmDrawRect(x, y, 6, 4, col(r + 70 + 8 * l, g + 110 + 10 * l, b + 110 + 12 * l, 0x80));
         }
     }
 }
